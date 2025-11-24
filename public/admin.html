@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel Login</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0b0f08;
+      color: #00ff00;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+
+    .container {
+      background: #001a00;
+      padding: 25px;
+      width: 380px;
+      border: 1px solid #00ff00;
+      border-radius: 8px;
+      box-shadow: 0 0 12px rgba(0,255,0,0.4);
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 20px;
+    }
+
+    input {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      border-radius: 5px;
+      border: 1px solid #00ff00;
+      background: #000;
+      color: #00ff00;
+    }
+
+    button {
+      margin-top: 15px;
+      width: 100%;
+      padding: 10px;
+      background: #003300;
+      color: #00ff00;
+      border: 1px solid #00ff00;
+      cursor: pointer;
+      transition: 0.2s;
+    }
+
+    button:hover { background: #005500; }
+
+    .switch {
+      text-align: center;
+      margin-top: 15px;
+      cursor: pointer;
+      color: #33ff33;
+    }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+
+  <!-- LOGIN -->
+  <div id="loginBox">
+    <h2>Login Admin</h2>
+    <input type="email" id="loginEmail" placeholder="Email">
+    <input type="password" id="loginPassword" placeholder="Password">
+    <button onclick="login()">Login</button>
+
+    <div class="switch" onclick="showRegister()">Belum punya akun? Register</div>
+  </div>
+
+  <!-- REGISTER -->
+  <div id="registerBox" class="hidden">
+    <h2>Register Admin</h2>
+    <input type="email" id="regEmail" placeholder="Email">
+    <input type="password" id="regPassword" placeholder="Password">
+    <button onclick="register()">Register</button>
+
+    <div class="switch" onclick="showLogin()">Sudah punya akun? Login</div>
+  </div>
+
+  <!-- Tambahkan di dalam .container, di paling bawah -->
+  <button onclick="goBack()">Kembali ke Halaman User</button>
+
+</div>
+
+<script>
+  function showRegister() {
+    document.getElementById("loginBox").classList.add("hidden");
+    document.getElementById("registerBox").classList.remove("hidden");
+  }
+
+  function showLogin() {
+    document.getElementById("registerBox").classList.add("hidden");
+    document.getElementById("loginBox").classList.remove("hidden");
+  }
+
+  async function register() {
+    const email = document.getElementById("regEmail").value;
+    const password = document.getElementById("regPassword").value;
+
+    const res = await fetch("/admin/register", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    if (data.success) showLogin();
+  }
+
+  async function login() {
+    const email = document.getElementById("loginEmail").value;
+    const password = document.getElementById("loginPassword").value;
+
+    const res = await fetch("/admin/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password })
+    });
+
+    const data = await res.json();
+    alert(data.message);
+
+    if (data.success) {
+      window.location.href = "/admin/dashboard"; // nanti buat dashboard
+    }
+  }
+
+  function goBack() {
+    window.location.href = "/index.html";
+  }
+</script>
+
+</body>
+</html>
