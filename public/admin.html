@@ -5,8 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Admin Panel Login</title>
   <style>
+    /* Menggunakan font retro 'VT323' */
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
     body {
-      font-family: Arial, sans-serif;
+      font-family: 'VT323', monospace; /* Terapkan font retro */
       background: #0b0f08;
       color: #00ff00;
       display: flex;
@@ -18,77 +21,110 @@
 
     .container {
       background: #001a00;
-      padding: 25px;
+      padding: 30px;
       width: 380px;
-      border: 1px solid #00ff00;
+      border: 2px solid #00ff00; /* Border lebih tebal */
       border-radius: 8px;
-      box-shadow: 0 0 12px rgba(0,255,0,0.4);
+      box-shadow: 0 0 15px rgba(0, 255, 0, 0.6); /* Efek glow neon */
+      display: flex;
+      flex-direction: column;
+      gap: 10px; /* Jarak antar elemen */
     }
 
     h2 {
       text-align: center;
-      margin-bottom: 20px;
+      margin-top: 0;
+      margin-bottom: 25px;
+      font-size: 2em;
+      text-shadow: 0 0 5px #00ff00;
     }
 
-    input {
+    /* PERBAIKAN: Menjaga lebar 100% dan box-sizing: border-box; 
+       agar padding tidak menambah lebar melebihi kontainer. */
+    input, button { 
+      box-sizing: border-box; 
       width: 100%;
+      font-size: 1.2em; /* Gunakan ukuran font yang sama */
+      font-family: 'VT323', monospace; /* Gunakan font yang sama */
+    }
+    
+    /* Styling untuk Input */
+    input {
       padding: 10px;
-      margin-top: 10px;
-      border-radius: 5px;
+      margin-bottom: 15px; 
+      border-radius: 6px;
       border: 1px solid #00ff00;
       background: #000;
       color: #00ff00;
+      box-shadow: inset 0 0 8px rgba(0, 255, 0, 0.15);
     }
 
+    /* Styling untuk Button */
     button {
-      margin-top: 15px;
-      width: 100%;
       padding: 10px;
       background: #003300;
       color: #00ff00;
       border: 1px solid #00ff00;
       cursor: pointer;
-      transition: 0.2s;
+      transition: background 0.2s, transform 0.2s;
     }
 
-    button:hover { background: #005500; }
+    button:hover {
+      background: #005500;
+      transform: scale(1.01);
+      box-shadow: 0 0 8px rgba(0, 255, 0, 0.6);
+    }
 
-    .switch {
+    /* Styling untuk Switch (Login/Register) */
+    .switch-link {
       text-align: center;
       margin-top: 15px;
+      margin-bottom: 5px;
       cursor: pointer;
       color: #33ff33;
+      font-size: 1em;
+      text-decoration: underline;
+      transition: color 0.2s;
     }
 
-    .hidden { display: none; }
+    .switch-link:hover {
+      color: #00ff00;
+    }
+
+    .hidden {
+      display: none;
+    }
+
+    .navigation-section {
+      margin-top: 20px;
+      padding-top: 15px;
+      border-top: 1px dashed #00ff00; 
+    }
   </style>
 </head>
 <body>
 
 <div class="container">
 
-  <!-- LOGIN -->
   <div id="loginBox">
     <h2>Login Admin</h2>
     <input type="email" id="loginEmail" placeholder="Email">
     <input type="password" id="loginPassword" placeholder="Password">
-    <button onclick="login()">Login</button>
-
-    <div class="switch" onclick="showRegister()">Belum punya akun? Register</div>
+    <button onclick="login()">[ LOGIN ]</button>
+    <div class="switch-link" onclick="showRegister()">Belum punya akun? Register</div>
   </div>
 
-  <!-- REGISTER -->
   <div id="registerBox" class="hidden">
     <h2>Register Admin</h2>
     <input type="email" id="regEmail" placeholder="Email">
     <input type="password" id="regPassword" placeholder="Password">
-    <button onclick="register()">Register</button>
-
-    <div class="switch" onclick="showLogin()">Sudah punya akun? Login</div>
+    <button onclick="register()">[ REGISTER ]</button>
+    <div class="switch-link" onclick="showLogin()">Sudah punya akun? Login</div>
   </div>
 
-  <!-- Tambahkan di dalam .container, di paling bawah -->
-  <button onclick="goBack()">Kembali ke Halaman User</button>
+  <div class="navigation-section">
+    <button onclick="goBack()">[ KEMBALI KE HALAMAN USER ]</button>
+  </div>
 
 </div>
 
@@ -104,42 +140,65 @@
   }
 
   async function register() {
-    const email = document.getElementById("regEmail").value;
-    const password = document.getElementById("regPassword").value;
+    const email = document.getElementById("regEmail").value.trim();
+    const password = document.getElementById("regPassword").value.trim();
 
-    const res = await fetch("/admin/register", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+    if (!email || !password) {
+        alert("Email dan Password harus diisi!");
+        return;
+    }
 
-    const data = await res.json();
-    alert(data.message);
+    try {
+        const res = await fetch("/admin/register", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
 
-    if (data.success) showLogin();
+        const data = await res.json();
+        alert(data.message);
+
+        if (data.success) showLogin();
+    } catch (error) {
+        console.error('ERR register:', error);
+        alert("Terjadi kesalahan jaringan saat registrasi.");
+    }
   }
 
   async function login() {
-    const email = document.getElementById("loginEmail").value;
-    const password = document.getElementById("loginPassword").value;
+    const email = document.getElementById("loginEmail").value.trim();
+    const password = document.getElementById("loginPassword").value.trim();
+    
+    if (!email || !password) {
+        alert("Email dan Password harus diisi!");
+        return;
+    }
 
-    const res = await fetch("/admin/login", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password })
-    });
+    try {
+        const res = await fetch("/admin/login", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ email, password })
+        });
 
-    const data = await res.json();
-    alert(data.message);
+        const data = await res.json();
+        alert(data.message);
 
-    if (data.success) {
-      window.location.href = "/admin/dashboard"; // nanti buat dashboard
+        if (data.success) {
+            window.location.href = "/admin/dashboard"; // Redirect ke dashboard
+        }
+    } catch (error) {
+        console.error('ERR login:', error);
+        alert("Terjadi kesalahan jaringan saat login.");
     }
   }
 
   function goBack() {
     window.location.href = "/index.html";
   }
+
+  // Tampilkan login secara default saat halaman dimuat
+  showLogin();
 </script>
 
 </body>
