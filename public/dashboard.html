@@ -1,0 +1,216 @@
+<!-- public/dashboard.html -->
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1"/>
+  <title>Admin Dashboard</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+    body{
+      font-family:'VT323',monospace;
+      background:#0b0f08;
+      color:#33ff33;
+      margin:0;padding:0
+    }
+    .header{
+      background:#001a00;
+      padding:18px;
+      text-align:center;
+      border-bottom:2px solid #00ff00
+    }
+    .header h1{margin:0;color:#00ff00}
+    .wrap{padding:18px}
+    .controls{display:flex;gap:12px;margin-bottom:14px}
+    .btn{
+      background:#003300;
+      border:1px solid #00ff00;
+      color:#00ff00;
+      padding:8px 12px;
+      border-radius:6px;
+      cursor:pointer
+    }
+    .btn:hover{background:#005500}
+    table{width:100%;border-collapse:collapse;font-size:16px}
+    th,td{
+      padding:10px;
+      border:1px solid #00ff00;
+      text-align:center
+    }
+    th{background:#002200}
+    tr:nth-child(even){background:#001400}
+    .status-on{color:#00ff00;font-weight:bold}
+    .status-off{color:#ff3333;font-weight:bold}
+  </style>
+</head>
+<body>
+  <div class="header"><h1>ADMIN DASHBOARD</h1></div>
+  <div class="wrap">
+    <div class="controls">
+      <button class="btn" onclick="location.href='/index.html'">Kembali ke User</button>
+      <button class="btn" onclick="logout()">Logout</button>
+    </div>
+
+    <!-- TABEL PERTAMA: DAFTAR USER + API KEY -->
+    <h2>Daftar Pengguna</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>ID</th>
+          <th>Nama</th>
+          <th>Email</th>
+          <th>API Key</th>
+          <th>Dibuat</th>
+          <th>Status</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tbody"></tbody>
+    </table>
+
+    <br><br>
+
+    <!-- TABEL KEDUA: DAFTAR SEMUA API KEY -->
+    <h2>Daftar Semua API Key</h2>
+    <table>
+      <thead>
+        <tr>
+          <th>API Key</th>
+          <th>Status</th>
+          <th>Pemilik (Email)</th>
+          <th>Dibuat</th>
+          <th>Kedaluwarsa</th>
+          <th>Aksi</th>
+        </tr>
+      </thead>
+      <tbody id="tbodyAll"></tbody>
+    </table>
+
+  </div>
+
+  <script>
+    // ============================
+    // LOAD TABEL PENGGUNA + API
+    // ============================
+    async function loadDashboard() {
+      try {
+        const res = await fetch('/admin/dashboard-data');
+        const json = await res.json();
+        if (!json.success) { alert('Gagal mengambil data'); return; }
+
+        const rows = json.data;
+        const tbody = document.getElementById('tbody');
+        tbody.innerHTML = '';
+
+        rows.forEach(r => {
+          const statusText = (r.expired == 1) ? "OFF" : "ON";
+          const statusClass = (r.expired == 1) ? 'status-off' : 'status-on';
+          const created = r.created_at ? r.created_at : '-';
+          const apiKey = r.api_key ? r.api_key : '-';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${r.id}</td>
+            <td>${r.first_name} ${r.last_name}</td>
+            <td>${r.email}</td>
+            <td style="font-family:monospace">${apiKey}</td>
+            <td>${created}</td>
+            <td class="${statusClass}">${statusText}</td>
+            <td><button class="btn" onclick="hapus(${r.id})">Hapus</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (e) {
+        console.error('ERR loadDashboard:', e);
+        alert('Terjadi kesalahan saat memuat dashboard');
+      }
+    }
+
+    // ============================
+    // LOAD SEMUA API KEY
+    // ============================
+    async function loadAllApiKeys() {
+      try {
+        const res = await fetch('/admin/api-keys');
+        const json = await res.json();
+        if (!json.success) { alert('Gagal mengambil semua API Key'); return; }
+
+        const tbody = document.getElementById('tbodyAll');
+        tbody.innerHTML = '';
+
+        json.data.forEach(r => {
+          const statusText = (r.expired == 1) ? "Kedaluwarsa" : "Aktif";
+          const statusClass = (r.expired == 1) ? 'status-off' : 'status-on';
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td style="font-family:monospace">${r.api_key}</td>
+            <td class="${statusClass}">${statusText}</td>
+            <td>${r.email || 'Belum ada'}</td>
+            <td>${r.created_at}</td>
+            <td>${r.expired_at || '-'}</td>
+            <td><button class="btn" onclick="hapusKey('${r.api_key}')">Hapus</button></td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+      } catch (e) {
+        console.error('ERR loadAllApiKeys:', e);
+        alert('Terjadi kesalahan saat memuat data API key');
+      }
+    }
+
+    // ============================
+    // HAPUS USER (TABEL 1)
+    // ============================
+    async function hapus(id) {
+      if (!confirm('Yakin menghapus data ini?')) return;
+      try {
+        const res = await fetch(`/admin/delete/${id}`, { method: 'DELETE' });
+        const json = await res.json();
+        alert(json.message || 'Selesai');
+        if (json.success) {
+          loadDashboard();
+          loadAllApiKeys();
+        }
+      } catch (e) {
+        console.error('ERR hapus:', e);
+        alert('Gagal menghapus data');
+      }
+    }
+
+    // ============================
+    // HAPUS API KEY (TABEL 2)
+    // ============================
+    async function hapusKey(key) {
+      if (!confirm('Hapus API Key ini?')) return;
+      try {
+        const res = await fetch(`/admin/delete-apikey/${key}`, { method: 'DELETE' });
+        const json = await res.json();
+        alert(json.message || 'API Key terhapus');
+        if (json.success) {
+          loadDashboard();
+          loadAllApiKeys();
+        }
+      } catch (e) {
+        console.error('ERR hapusKey:', e);
+        alert('Gagal menghapus API key');
+      }
+    }
+
+    // ============================
+    // LOGOUT
+    // ============================
+    function logout() {
+      location.href = '/admin.html';
+    }
+
+    // ============================
+    // LOAD SAAT BUKA HALAMAN
+    // ============================
+    loadDashboard();
+    loadAllApiKeys();
+  </script>
+</body>
+</html>
